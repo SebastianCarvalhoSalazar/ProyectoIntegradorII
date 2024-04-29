@@ -167,8 +167,8 @@ class TimeSeriesXGBoost:
         self.test[self.valor_columna].iloc[1:].reset_index(drop=True).plot(ax=ax, color='b', ms=6, lw=2, grid=True, label='Real Data', marker='o')
 
         # Agregar intervalos de confianza
-        plt.fill_between(predictions.reset_index(drop=True).index, no_parametric_lower_ic_list, no_parametric_upper_ic_list, color='orange', alpha=0.3, label='Non-Parametric 95% CI')
-        plt.fill_between(predictions.reset_index(drop=True).index, semi_parametric_lower_ic_list, semi_parametric_upper_ic_list, color='blue', alpha=0.3, label='Semi-Parametric 95% CI')
+        plt.fill_between(predictions.reset_index(drop=True).index, no_parametric_lower_ic_list, no_parametric_upper_ic_list, color='orange', alpha=0.2, label='Non-Parametric 95% CI')
+        plt.fill_between(predictions.reset_index(drop=True).index, semi_parametric_lower_ic_list, semi_parametric_upper_ic_list, color='blue', alpha=0.2, label='Semi-Parametric 95% CI')
 
         plt.xlabel('Days')
         plt.ylabel('influx')
