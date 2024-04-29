@@ -173,7 +173,7 @@ class TimeSeriesXGBoost:
         plt.xlabel('Days')
         plt.ylabel('influx')
         plt.legend()
-        return fig
+        return fig, no_parametric_lower_ic_list.to_list(), no_parametric_upper_ic_list.to_list(), semi_parametric_lower_ic_list.to_list(), semi_parametric_upper_ic_list.to_list()
 
     def score(self):
         rmse = np.sqrt(mean_squared_error(self.future_w_features_pred['pred'].values[2::], self.test[self.valor_columna].values[1::]))

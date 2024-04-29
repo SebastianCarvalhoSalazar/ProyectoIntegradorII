@@ -39,7 +39,7 @@ def main(df, output_folder_p, train_until_p):
                     # Instancias
                     scores = pd.DataFrame([[linea, hora]], columns=['Linea', 'Horas'])
                     arima_model_instance = ARIMAModel(df, linea=linea, hora=hora, fecha_columna='Fecha', valor_columna='Qty_passangers', frecuencia='D',
-                                    train_until=train_until, p_range=range(5,8), d_range=range(1,3), q_range=range(5,8), n_splits=5)
+                                    train_until=train_until, p_range=range(5,8), d_range=range(1,3), q_range=range(5,8), n_splits=8)
                     
                     ts_xgb = TimeSeriesXGBoost(df,train_until=train_until)
                     ts_xgb.preprocess_data(linea, hora)
@@ -88,10 +88,15 @@ def main(df, output_folder_p, train_until_p):
                     plt.close()
 
                     
-                    fig = ts_xgb.plot_predic()
+                    fig, no_parametric_lower_ic_list, no_parametric_upper_ic_list, semi_parametric_lower_ic_list, semi_parametric_upper_ic_list = ts_xgb.plot_predic()
                     fig.savefig(filename_ts_xgb)
                     plt.clf()
-                    plt.close()                
+                    plt.close()            
+
+                    prediction_df['l_xgboost_no_parametric_ic'] = no_parametric_upper_ic_list
+                    prediction_df['u_xgboost_no_parametric_ic'] = no_parametric_lower_ic_list
+                    prediction_df['l_xgboost_semi_parametric_ic'] = semi_parametric_upper_ic_list
+                    prediction_df['u_xgboost_semi_parametric_ic'] = semi_parametric_lower_ic_list
                     
                     # Metricas
                     scores_arima = arima_model_instance.score(static_predictions, dynamic_predictions)
