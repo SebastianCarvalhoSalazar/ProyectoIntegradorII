@@ -5,6 +5,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import TimeSeriesSplit
 import xgboost as xgb
+from scipy.stats import norm
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -62,20 +63,21 @@ class TimeSeriesXGBoost:
         self.FEATURES = self.train.drop([self.valor_columna], axis=1).columns
         TARGET = self.valor_columna
 
-        # # Definir los hiperparámetros a ajustar
+        # Definir los hiperparámetros a ajustar
         param_grid = {
-            'n_estimators': [10, 50, 100],
-            'max_depth': [2, 4, 6, 12],
+            'n_estimators': [50, 100],
+            'max_depth': [4, 6, 12],
             'learning_rate': [0.01, 0.05, 0.1],
             'reg_lambda': [0.01, 0.1, 1]
         }
 
         # Inicializar el mejor modelo y el mejor puntaje
+        all_avg_scores = []
         best_avg_score = float('inf')
         self.best_model = None
 
         # Dividir los datos utilizando TimeSeriesSplit
-        tss = TimeSeriesSplit(n_splits=5)
+        tss = TimeSeriesSplit(n_splits=8)
 
         # Realizar la búsqueda de hiperparámetros con validación cruzada en serie temporal
         for n_estimators in param_grid['n_estimators']:
@@ -110,11 +112,24 @@ class TimeSeriesXGBoost:
                             fold_scores.append(score)  # Agregar el puntaje RMSE del fold actual a la lista
 
                         avg_score = np.mean(fold_scores)  # Calcular el promedio de los puntajes RMSE del fold
+                        all_avg_scores.append(avg_score)
                         if avg_score < best_avg_score:
                             best_avg_score = avg_score
                             self.best_model = reg
                             # print(f"Hiperparámetros: n_estimators={n_estimators}, max_depth={max_depth}, learning_rate={learning_rate}, reg_lambda={reg_lambda}, RMSE promedio: {best_avg_score}")
-        
+
+        # intervalos de confianza No Parametricos
+        alpha = 95
+        alpha2 = alpha/2
+        self.no_parametric_lower_ic = np.percentile(all_avg_scores, alpha2)
+        self.no_parametric_upper_ic = np.percentile(all_avg_scores, 100 - alpha2)
+
+        # Intervalos de confianza Semi-Parametricos
+        valor_95 = norm.ppf(alpha/100)
+        std_rmse_cv = np.sqrt(np.var(all_avg_scores))
+        self.semi_parametric_ic = valor_95 * std_rmse_cv
+
+        # Parametros del modelo
         params_dict = self.best_model.get_params()
         keys = ['n_estimators', 'max_depth', 'learning_rate', 'reg_lambda']
         selected_params = {key : params_dict[key] for key in keys}
@@ -139,14 +154,25 @@ class TimeSeriesXGBoost:
         return self.future_w_features_pred['pred'].to_list()[2:]
 
 
-    def plot_predic(self, filename):
+    def plot_predic(self):
+            
+        predictions = self.future_w_features_pred['pred'].iloc[2:]
+        no_parametric_lower_ic_list = predictions - (self.no_parametric_lower_ic - np.mean(predictions.values))
+        no_parametric_upper_ic_list = predictions + (self.no_parametric_upper_ic - np.mean(predictions.values))
+        semi_parametric_lower_ic_list = predictions - (self.semi_parametric_ic - np.mean(predictions.values))
+        semi_parametric_upper_ic_list = predictions + (self.semi_parametric_ic - np.mean(predictions.values))
+
         fig, ax = plt.subplots(figsize=(15, 4.5))
-        self.future_w_features_pred['pred'].iloc[2:].reset_index(drop=True).plot(ax=ax, color='r', ms=6, lw=2, title='Predictions Vs Real Data', grid=True, label='Predictions', marker='o')
+        predictions.reset_index(drop=True).plot(ax=ax, color='r', ms=6, lw=2, title='Predictions Vs Real Data', grid=True, label='Predictions', marker='o')
         self.test[self.valor_columna].iloc[1:].reset_index(drop=True).plot(ax=ax, color='b', ms=6, lw=2, grid=True, label='Real Data', marker='o')
+
+        # Agregar intervalos de confianza
+        plt.fill_between(predictions.reset_index(drop=True).index, no_parametric_lower_ic_list, no_parametric_upper_ic_list, color='orange', alpha=0.3, label='Non-Parametric 95% CI')
+        plt.fill_between(predictions.reset_index(drop=True).index, semi_parametric_lower_ic_list, semi_parametric_upper_ic_list, color='blue', alpha=0.3, label='Semi-Parametric 95% CI')
+
         plt.xlabel('Days')
         plt.ylabel('influx')
         plt.legend()
-        # plt.show()
         return fig
 
     def score(self):

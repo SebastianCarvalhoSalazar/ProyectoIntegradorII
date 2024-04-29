@@ -88,7 +88,7 @@ def main(df, output_folder_p, train_until_p):
                     plt.close()
 
                     
-                    fig = ts_xgb.plot_predic(filename_ts_xgb)
+                    fig = ts_xgb.plot_predic()
                     fig.savefig(filename_ts_xgb)
                     plt.clf()
                     plt.close()                
