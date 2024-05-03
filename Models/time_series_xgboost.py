@@ -72,7 +72,7 @@ class TimeSeriesXGBoost:
         }
 
         # Inicializar el mejor modelo y el mejor puntaje
-        all_avg_scores = []
+        # all_avg_scores = []
         best_avg_score = float('inf')
         self.best_model = None
 
@@ -112,21 +112,22 @@ class TimeSeriesXGBoost:
                             fold_scores.append(score)  # Agregar el puntaje RMSE del fold actual a la lista
 
                         avg_score = np.mean(fold_scores)  # Calcular el promedio de los puntajes RMSE del fold
-                        all_avg_scores.append(avg_score)
+                        # all_avg_scores.append(avg_score)
                         if avg_score < best_avg_score:
                             best_avg_score = avg_score
+                            best_avg_scores = fold_scores
                             self.best_model = reg
                             # print(f"Hiperparámetros: n_estimators={n_estimators}, max_depth={max_depth}, learning_rate={learning_rate}, reg_lambda={reg_lambda}, RMSE promedio: {best_avg_score}")
 
         # intervalos de confianza No Parametricos
         alpha = 95
         alpha2 = alpha/2
-        self.no_parametric_lower_ic = np.percentile(all_avg_scores, alpha2)
-        self.no_parametric_upper_ic = np.percentile(all_avg_scores, 100 - alpha2)
+        self.no_parametric_lower_ic = np.percentile(best_avg_scores, alpha2)
+        self.no_parametric_upper_ic = np.percentile(best_avg_scores, 100 - alpha2)
 
         # Intervalos de confianza Semi-Parametricos
         valor_95 = norm.ppf(alpha/100)
-        std_rmse_cv = np.sqrt(np.var(all_avg_scores))
+        std_rmse_cv = np.sqrt(np.var(best_avg_scores))
         self.semi_parametric_ic = valor_95 * std_rmse_cv
 
         # Parametros del modelo
