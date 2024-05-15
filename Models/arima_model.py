@@ -156,11 +156,11 @@ class ARIMAModel:
         plt.plot(df_vis['Static Predicted'], label='Static Predicted', marker='o')
         plt.plot(df_vis['Dynamic Predicted'], label='Dynamic Predicted', marker='o')
 
-        if static_conf_int is not None:
-            plt.fill_between(df_vis.index, static_conf_int[:,0], static_conf_int[:,1], color='blue', alpha=0.2, label='Static Confidence Interval')
+        # if static_conf_int is not None:
+        #     plt.fill_between(df_vis.index, static_conf_int[:,0], static_conf_int[:,1], color='blue', alpha=0.2, label='Static Confidence Interval')
 
-        if dynamic_conf_int is not None:
-            plt.fill_between(df_vis.index, dynamic_conf_int[:,0], dynamic_conf_int[:,1], color='orange', alpha=0.2, label='Dynamic Confidence Interval')
+        # if dynamic_conf_int is not None:
+        #     plt.fill_between(df_vis.index, dynamic_conf_int[:,0], dynamic_conf_int[:,1], color='orange', alpha=0.2, label='Dynamic Confidence Interval')
 
         plt.title('Comparison between Real Data, Static Predictions and Dynamic Predictions')
         plt.xlabel('Days')
